@@ -1,0 +1,66 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  background: rgba(11, 19, 32, 0.7);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  gap: 18px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(100, 204, 197, 0.25), rgba(23, 107, 135, 0.25));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.brand-text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nav-link {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  color: var(--muted);
+}
+
+.nav-link:hover {
+  text-decoration: none;
+  color: var(--text);
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-link.is-active {
+  color: var(--text);
+  border-color: rgba(100, 204, 197, 0.35);
+  background: rgba(100, 204, 197, 0.08);
+}

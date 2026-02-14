@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LexiBridge | Create</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/pages/create.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html" aria-label="LexiBridge Home">
+          <span class="brand-mark" aria-hidden="true">LB</span>
+          <span class="brand-text">LexiBridge</span>
+        </a>
+
+        <nav class="nav" aria-label="Primary">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link is-active" href="create.html">Create</a>
+          <a class="nav-link" href="study.html?deck=core-es">Study</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="container create">
+      <section class="create-head">
+        <div>
+          <h1>Create or edit a deck</h1>
+          <p class="muted">
+            This form validates required fields and saves to local storage for persistence.
+          </p>
+        </div>
+
+        <div class="create-actions">
+          <a class="btn btn-ghost" href="index.html">Back</a>
+          <button class="btn btn-primary" form="deckForm" type="submit">Save deck</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Deck form">
+        <form id="deckForm" novalidate>
+          <input type="hidden" id="deckId" name="deckId" />
+
+          <div class="grid2">
+            <div class="field">
+              <label for="deckName">Deck name</label>
+              <input
+                id="deckName"
+                name="deckName"
+                class="input"
+                type="text"
+                required
+                minlength="2"
+                maxlength="40"
+                placeholder="Example: Core Spanish"
+              />
+              <p class="error" id="deckNameError"></p>
+            </div>
+
+            <div class="field">
+              <label for="deckLanguage">Language</label>
+              <select id="deckLanguage" name="deckLanguage" class="select" required>
+                <option value="">Select</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Korean">Korean</option>
+                <option value="English">English</option>
+              </select>
+              <p class="error" id="deckLanguageError"></p>
+            </div>
+
+            <div class="field">
+              <label for="deckCategory">Category</label>
+              <select id="deckCategory" name="deckCategory" class="select" required>
+                <option value="">Select</option>
+                <option value="Basics">Basics</option>
+                <option value="Travel">Travel</option>
+                <option value="School">School</option>
+                <option value="Daily">Daily</option>
+              </select>
+              <p class="error" id="deckCategoryError"></p>
+            </div>
+
+            <div class="field">
+              <label for="deckDescription">Description</label>
+              <input
+                id="deckDescription"
+                name="deckDescription"
+                class="input"
+                type="text"
+                maxlength="80"
+                placeholder="Short description for learners"
+              />
+              <p class="help">Optional</p>
+            </div>
+          </div>
+
+          <div class="cards-head">
+            <h2>Cards</h2>
+            <div class="cards-actions">
+              <button id="addCardBtn" class="btn btn-ghost" type="button">Add card</button>
+              <button id="addSampleBtn" class="btn btn-ghost" type="button">Add sample</button>
+            </div>
+          </div>
+
+          <div class="table" role="region" aria-label="Cards table">
+            <div class="table-row table-head" aria-hidden="true">
+              <div>Term</div>
+              <div>Meaning</div>
+              <div>Example</div>
+              <div class="table-actions-col">Actions</div>
+            </div>
+
+            <div id="cardRows"></div>
+          </div>
+
+          <div class="form-foot">
+            <div class="muted" id="cardCountText">0 cards</div>
+            <div class="form-foot-actions">
+              <button id="deleteDeckBtn" class="btn btn-danger" type="button">Delete deck</button>
+              <a id="studyDeckLink" class="btn btn-ghost" href="study.html?deck=core-es">
+                Study this deck
+              </a>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <dialog id="confirmDialog" class="dialog">
+        <form method="dialog" class="dialog-inner">
+          <h3>Confirm delete</h3>
+          <p class="muted">This will permanently remove the deck from local storage.</p>
+          <div class="dialog-actions">
+            <button class="btn btn-ghost" value="cancel">Cancel</button>
+            <button class="btn btn-danger" value="confirm">Delete</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="muted">
+          URL parameter support: create.html?deck=your-deck-id
+        </p>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script type="module" src="js/create.js"></script>
+  </body>
+</html>

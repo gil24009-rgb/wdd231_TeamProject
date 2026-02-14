@@ -1,0 +1,28 @@
+:root {
+  --bg: #0b1320;
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.09);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.72);
+  --faint: rgba(255, 255, 255, 0.55);
+  --border: rgba(255, 255, 255, 0.14);
+
+  --primary: #64ccc5;
+  --primary-2: #176b87;
+
+  --danger: #ff6b6b;
+
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+
+  --radius: 18px;
+  --radius-sm: 12px;
+
+  --container: 1100px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+
+  --focus: 0 0 0 3px rgba(100, 204, 197, 0.35);
+
+  --speed: 180ms;
+}

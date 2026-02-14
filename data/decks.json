@@ -1,0 +1,31 @@
+{
+  "decks": [
+    {
+      "id": "core-es",
+      "name": "Core Spanish",
+      "language": "Spanish",
+      "category": "Basics",
+      "description": "High frequency basics for beginners.",
+      "cards": [
+        { "id": "es-1", "term": "Hola", "meaning": "Hello", "example": "Hola, ¿cómo estás?" },
+        { "id": "es-2", "term": "Gracias", "meaning": "Thank you", "example": "Gracias por tu ayuda." },
+        { "id": "es-3", "term": "Por favor", "meaning": "Please", "example": "Por favor, una mesa para dos." },
+        { "id": "es-4", "term": "Sí", "meaning": "Yes", "example": "Sí, claro." },
+        { "id": "es-5", "term": "No", "meaning": "No", "example": "No, gracias." }
+      ]
+    },
+    {
+      "id": "daily-ko",
+      "name": "Daily Korean",
+      "language": "Korean",
+      "category": "Daily",
+      "description": "Short daily phrases and essentials.",
+      "cards": [
+        { "id": "ko-1", "term": "안녕하세요", "meaning": "Hello", "example": "안녕하세요, 만나서 반가워요." },
+        { "id": "ko-2", "term": "감사합니다", "meaning": "Thank you", "example": "도와주셔서 감사합니다." },
+        { "id": "ko-3", "term": "죄송합니다", "meaning": "Sorry", "example": "늦어서 죄송합니다." },
+        { "id": "ko-4", "term": "괜찮아요", "meaning": "It is okay", "example": "괜찮아요, 문제 없어요." }
+      ]
+    }
+  ]
+}
