@@ -48,21 +48,30 @@
             <div class="field">
               <label for="deckName">Deck name</label>
               <input
-                id="deckName"
-                name="deckName"
-                class="input"
-                type="text"
-                required
-                minlength="2"
-                maxlength="40"
-                placeholder="Example: Core Spanish"
-              />
+               id="deckName"
+               name="deckName"
+               class="input"
+               type="text"
+               required
+               minlength="2"
+               maxlength="40"
+  placeholder="Example: Core Spanish"
+  aria-describedby="deckNameError"
+  aria-invalid="false"
+/>
               <p class="error" id="deckNameError"></p>
             </div>
 
             <div class="field">
               <label for="deckLanguage">Language</label>
-              <select id="deckLanguage" name="deckLanguage" class="select" required>
+              <select
+  id="deckLanguage"
+  name="deckLanguage"
+  class="select"
+  required
+  aria-describedby="deckLanguageError"
+  aria-invalid="false"
+>
                 <option value="">Select</option>
                 <option value="Spanish">Spanish</option>
                 <option value="Korean">Korean</option>
@@ -73,7 +82,14 @@
 
             <div class="field">
               <label for="deckCategory">Category</label>
-              <select id="deckCategory" name="deckCategory" class="select" required>
+              <select
+  id="deckCategory"
+  name="deckCategory"
+  class="select"
+  required
+  aria-describedby="deckCategoryError"
+  aria-invalid="false"
+>
                 <option value="">Select</option>
                 <option value="Basics">Basics</option>
                 <option value="Travel">Travel</option>

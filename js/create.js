@@ -1,6 +1,6 @@
-import { getDeckById } from "./app.js";
+import { getDeckById, isBaseDeck } from "./app.js";
 import { qs, getParam, uid, setToast } from "./utils.js";
-import { upsertUserDeck, deleteUserDeck } from "./storage.js";
+import { upsertDeckAnySource, deleteDeckAnySource, pushHistory } from "./storage.js";
 
 const deckForm = qs("#deckForm");
 const deckIdInput = qs("#deckId");
@@ -24,6 +24,62 @@ const studyDeckLink = qs("#studyDeckLink");
 const confirmDialog = qs("#confirmDialog");
 
 let currentDeck = null;
+let lastActiveElement = null;
+
+function escapeAttr(str) {
+  return String(str).replace(/[&<>"']/g, (c) => {
+    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return map[c] || c;
+  });
+}
+
+function getFocusable(root) {
+  const selectors =
+    'a[href], button:not([disabled]), textarea, input, select, details, [tabindex]:not([tabindex="-1"])';
+  return Array.from(root.querySelectorAll(selectors)).filter((el) => el.offsetParent !== null);
+}
+
+function trapDialogFocus(dialog) {
+  const onKeyDown = (e) => {
+    if (e.key !== "Tab") return;
+    const focusable = getFocusable(dialog);
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  dialog.addEventListener("keydown", onKeyDown);
+  dialog.addEventListener(
+    "close",
+    () => {
+      dialog.removeEventListener("keydown", onKeyDown);
+      if (lastActiveElement) lastActiveElement.focus();
+    },
+    { once: true }
+  );
+
+  const focusable = getFocusable(dialog);
+  if (focusable[0]) focusable[0].focus();
+}
+
+function setFieldValidity(input, errorEl, message) {
+  if (message) {
+    errorEl.textContent = message;
+    input.setAttribute("aria-invalid", "true");
+  } else {
+    errorEl.textContent = "";
+    input.setAttribute("aria-invalid", "false");
+  }
+}
 
 function cardRowTemplate(card) {
   const row = document.createElement("div");
@@ -69,13 +125,6 @@ function cardRowTemplate(card) {
   return row;
 }
 
-function escapeAttr(str) {
-  return String(str).replace(/[&<>"']/g, (c) => {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    return map[c] || c;
-  });
-}
-
 function moveRow(row, dir) {
   const rows = Array.from(cardRows.children);
   const i = rows.indexOf(row);
@@ -96,22 +145,23 @@ function updateCount() {
 function validateDeckFields() {
   let ok = true;
 
-  deckNameError.textContent = "";
-  deckLanguageError.textContent = "";
-  deckCategoryError.textContent = "";
+  const name = deckName.value.trim();
+  setFieldValidity(deckName, deckNameError, "");
+  setFieldValidity(deckLanguage, deckLanguageError, "");
+  setFieldValidity(deckCategory, deckCategoryError, "");
 
-  if (!deckName.value.trim() || deckName.value.trim().length < 2) {
-    deckNameError.textContent = "Deck name is required (min 2 chars).";
+  if (!name || name.length < 2) {
+    setFieldValidity(deckName, deckNameError, "Deck name is required (min 2 chars).");
     ok = false;
   }
 
   if (!deckLanguage.value) {
-    deckLanguageError.textContent = "Language is required.";
+    setFieldValidity(deckLanguage, deckLanguageError, "Language is required.");
     ok = false;
   }
 
   if (!deckCategory.value) {
-    deckCategoryError.textContent = "Category is required.";
+    setFieldValidity(deckCategory, deckCategoryError, "Category is required.");
     ok = false;
   }
 
@@ -191,11 +241,37 @@ function loadIntoForm(d) {
   deckCategory.value = d.category || "";
   deckDescription.value = d.description || "";
 
+  deckName.setAttribute("aria-invalid", "false");
+  deckLanguage.setAttribute("aria-invalid", "false");
+  deckCategory.setAttribute("aria-invalid", "false");
+
   cardRows.innerHTML = "";
   for (const c of d.cards || []) addCard(c);
 
   studyDeckLink.href = `study.html?deck=${encodeURIComponent(d.id)}`;
   updateCount();
+}
+
+async function confirmDelete() {
+  const id = deckIdInput.value;
+  if (!id) return false;
+
+  lastActiveElement = document.activeElement;
+
+  if (typeof confirmDialog.showModal === "function") {
+    confirmDialog.showModal();
+    trapDialogFocus(confirmDialog);
+    const res = await new Promise((resolve) => {
+      confirmDialog.addEventListener(
+        "close",
+        () => resolve(confirmDialog.returnValue),
+        { once: true }
+      );
+    });
+    return res === "confirm";
+  }
+
+  return window.confirm("Delete this deck?");
 }
 
 async function init() {
@@ -222,7 +298,7 @@ async function init() {
     setToast("Sample cards added.");
   });
 
-  deckForm.addEventListener("submit", (e) => {
+  deckForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const okDeck = validateDeckFields();
@@ -233,10 +309,19 @@ async function init() {
     }
 
     const deck = collectDeck();
-    upsertUserDeck(deck);
+    const base = await isBaseDeck(deck.id);
+
+    upsertDeckAnySource(deck, base ? "base" : "user");
+
+    pushHistory({
+      type: "deck",
+      deckId: deck.id,
+      action: "save",
+      message: base ? "Saved override for base deck." : "Saved user deck."
+    });
 
     studyDeckLink.href = `study.html?deck=${encodeURIComponent(deck.id)}`;
-    setToast("Saved to local storage.");
+    setToast("Saved.");
   });
 
   deleteDeckBtn.addEventListener("click", async () => {
@@ -246,22 +331,18 @@ async function init() {
       return;
     }
 
-    if (typeof confirmDialog.showModal === "function") {
-      confirmDialog.showModal();
-      const res = await new Promise((resolve) => {
-        confirmDialog.addEventListener(
-          "close",
-          () => resolve(confirmDialog.returnValue),
-          { once: true }
-        );
-      });
-      if (res !== "confirm") return;
-    } else {
-      const ok = window.confirm("Delete this deck?");
-      if (!ok) return;
-    }
+    const ok = await confirmDelete();
+    if (!ok) return;
 
-    deleteUserDeck(id);
+    deleteDeckAnySource(id);
+
+    pushHistory({
+      type: "deck",
+      deckId: id,
+      action: "delete",
+      message: "Deleted deck."
+    });
+
     setToast("Deleted.");
     window.setTimeout(() => {
       window.location.href = "index.html";

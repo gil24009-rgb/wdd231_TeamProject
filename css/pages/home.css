@@ -22,7 +22,7 @@
   box-shadow: var(--shadow);
   padding: 16px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
@@ -57,12 +57,23 @@
   justify-content: space-between;
   gap: 12px;
   margin: 12px 0 12px 0;
+  flex-wrap: wrap;
+}
+
+.deck-grid-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 @media (min-width: 860px) {
   .hero {
     grid-template-columns: 1.2fr 0.8fr;
     align-items: center;
+  }
+
+  .hero-card {
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .panel-row {

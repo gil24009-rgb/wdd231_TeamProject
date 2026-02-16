@@ -10,12 +10,36 @@ const resetDemo = qs("#resetDemo");
 
 const statDecks = qs("#statDecks");
 const statCards = qs("#statCards");
+const statCompletion = qs("#statCompletion");
 const statStreak = qs("#statStreak");
 
 let decks = [];
 
 function countCards(list) {
   return list.reduce((sum, d) => sum + (d.cards?.length || 0), 0);
+}
+
+function calcCompletion(list) {
+  const progress = loadProgress();
+  let total = 0;
+  let known = 0;
+
+  for (const d of list) {
+    const n = d.cards?.length || 0;
+    total += n;
+    const p = progress[d.id];
+    if (p && p.known) known += Object.keys(p.known).length;
+  }
+
+  const pct = total ? Math.round((known / total) * 100) : 0;
+  return `${pct}%`;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => {
+    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return map[c] || c;
+  });
 }
 
 function deckCard(deck) {
@@ -43,13 +67,6 @@ function deckCard(deck) {
     </div>
   `;
   return a;
-}
-
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    return map[c] || c;
-  });
 }
 
 function applyFilters() {
@@ -80,6 +97,7 @@ async function init() {
 
   statDecks.textContent = String(decks.length);
   statCards.textContent = String(countCards(decks));
+  statCompletion.textContent = calcCompletion(decks);
   statStreak.textContent = String(loadStreak().count);
 
   applyFilters();

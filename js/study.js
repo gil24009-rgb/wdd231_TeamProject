@@ -1,6 +1,6 @@
 import { getDeckById } from "./app.js";
 import { qs, getParam, setToast, clamp, normalize } from "./utils.js";
-import { getDeckProgress, setDeckProgress, bumpStreak } from "./storage.js";
+import { getDeckProgress, setDeckProgress, bumpStreak, pushHistory } from "./storage.js";
 
 const deckTitle = qs("#deckTitle");
 const deckMeta = qs("#deckMeta");
@@ -77,7 +77,6 @@ function updateProgress() {
 }
 
 function persistProgress() {
-  const data = getDeckProgress(deck.id);
   const knownObj = {};
   for (const id of knownSet) knownObj[id] = true;
 
@@ -98,6 +97,14 @@ function nextCard() {
   }
 
   bumpStreak();
+
+  pushHistory({
+    type: "study",
+    deckId: deck.id,
+    action: "complete",
+    message: `Completed deck. Known ${knownSet.size} of ${list.length}.`
+  });
+
   setToast("Deck complete. Nice work.");
   updateProgress();
   persistProgress();
@@ -107,10 +114,27 @@ function markKnown() {
   const c = currentCard();
   if (!c) return;
   knownSet.add(c.id);
+
+  pushHistory({
+    type: "study",
+    deckId: deck.id,
+    action: "known",
+    message: `Marked known: ${c.term}`
+  });
+
   nextCard();
 }
 
 function markAgain() {
+  const c = currentCard();
+  if (c) {
+    pushHistory({
+      type: "study",
+      deckId: deck.id,
+      action: "again",
+      message: `Marked again: ${c.term}`
+    });
+  }
   nextCard();
 }
 
@@ -169,6 +193,14 @@ async function init() {
   shuffleBtn.addEventListener("click", () => {
     list = shuffle(list);
     index = 0;
+
+    pushHistory({
+      type: "study",
+      deckId: deck.id,
+      action: "shuffle",
+      message: "Shuffled deck order."
+    });
+
     setToast("Shuffled.");
     updateModeView();
     updateProgress();
@@ -195,9 +227,17 @@ async function init() {
     if (user === target) {
       quizFeedback.textContent = "Correct.";
       knownSet.add(c.id);
+
+      pushHistory({
+        type: "study",
+        deckId: deck.id,
+        action: "quiz-correct",
+        message: `Correct answer for: ${c.term}`
+      });
+
       nextCard();
     } else {
-      quizFeedback.textContent = `Not quite. Try again.`;
+      quizFeedback.textContent = "Not quite. Try again.";
       quizAnswer.select();
     }
   });
@@ -206,6 +246,14 @@ async function init() {
     const c = currentCard();
     if (!c) return;
     quizFeedback.textContent = `Answer: ${c.meaning}`;
+
+    pushHistory({
+      type: "study",
+      deckId: deck.id,
+      action: "reveal",
+      message: `Revealed answer for: ${c.term}`
+    });
+
     setToast("Revealed.");
   });
 }

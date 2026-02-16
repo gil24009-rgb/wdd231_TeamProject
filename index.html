@@ -21,6 +21,7 @@
           <a class="nav-link is-active" href="index.html">Home</a>
           <a class="nav-link" href="create.html">Create</a>
           <a class="nav-link" href="study.html?deck=core-es">Study</a>
+          <a class="nav-link" href="history.html">History</a>
         </nav>
       </div>
     </header>
@@ -46,6 +47,10 @@
           <div class="stat">
             <div class="stat-label">Cards</div>
             <div class="stat-value" id="statCards">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Completion</div>
+            <div class="stat-value" id="statCompletion">0%</div>
           </div>
           <div class="stat">
             <div class="stat-label">Streak</div>
@@ -93,9 +98,10 @@
       <section class="deck-grid" aria-label="Deck list">
         <div class="deck-grid-head">
           <h2>Decks</h2>
-          <button class="btn btn-ghost" id="resetDemo" type="button">
-            Reset demo data
-          </button>
+          <div class="deck-grid-actions">
+            <button class="btn btn-ghost" id="resetDemo" type="button">Reset demo data</button>
+            <a class="btn btn-ghost" href="history.html">View history</a>
+          </div>
         </div>
 
         <div id="deckList" class="grid" aria-live="polite"></div>
@@ -104,11 +110,10 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
+        <p class="muted">LexiBridge. Built for WDD 231 team project.</p>
         <p class="muted">
-          LexiBridge. Built for WDD 231 team project.
-        </p>
-        <p class="muted">
-          <a href="create.html">Create</a> · <a href="study.html?deck=core-es">Study</a>
+          <a href="create.html">Create</a> · <a href="study.html?deck=core-es">Study</a> ·
+          <a href="history.html">History</a>
         </p>
       </div>
     </footer>
