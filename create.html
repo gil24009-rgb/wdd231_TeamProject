@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LexiBridge | Create</title>
+    <title>LexiBridge | Deck</title>
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/pages/create.css" />
   </head>
@@ -19,8 +19,9 @@
 
         <nav class="nav" aria-label="Primary">
           <a class="nav-link" href="index.html">Home</a>
-          <a class="nav-link is-active" href="create.html">Create</a>
-          <a class="nav-link" href="study.html?deck=core-es">Study</a>
+          <a class="nav-link is-active" href="create.html">Deck</a>
+          <a class="nav-link" href="study.html">Study</a>
+          <a class="nav-link" href="history.html">History</a>
         </nav>
       </div>
     </header>
@@ -30,7 +31,7 @@
         <div>
           <h1>Create or edit a deck</h1>
           <p class="muted">
-            This form validates required fields and saves to local storage for persistence.
+            Build custom decks, edit existing cards, and manage your study materials.
           </p>
         </div>
 
@@ -48,30 +49,30 @@
             <div class="field">
               <label for="deckName">Deck name</label>
               <input
-               id="deckName"
-               name="deckName"
-               class="input"
-               type="text"
-               required
-               minlength="2"
-               maxlength="40"
-  placeholder="Example: Core Spanish"
-  aria-describedby="deckNameError"
-  aria-invalid="false"
-/>
+                id="deckName"
+                name="deckName"
+                class="input"
+                type="text"
+                required
+                minlength="2"
+                maxlength="40"
+                placeholder="Example: Core Spanish"
+                aria-describedby="deckNameError"
+                aria-invalid="false"
+              />
               <p class="error" id="deckNameError"></p>
             </div>
 
             <div class="field">
               <label for="deckLanguage">Language</label>
               <select
-  id="deckLanguage"
-  name="deckLanguage"
-  class="select"
-  required
-  aria-describedby="deckLanguageError"
-  aria-invalid="false"
->
+                id="deckLanguage"
+                name="deckLanguage"
+                class="select"
+                required
+                aria-describedby="deckLanguageError"
+                aria-invalid="false"
+              >
                 <option value="">Select</option>
                 <option value="Spanish">Spanish</option>
                 <option value="Korean">Korean</option>
@@ -83,13 +84,13 @@
             <div class="field">
               <label for="deckCategory">Category</label>
               <select
-  id="deckCategory"
-  name="deckCategory"
-  class="select"
-  required
-  aria-describedby="deckCategoryError"
-  aria-invalid="false"
->
+                id="deckCategory"
+                name="deckCategory"
+                class="select"
+                required
+                aria-describedby="deckCategoryError"
+                aria-invalid="false"
+              >
                 <option value="">Select</option>
                 <option value="Basics">Basics</option>
                 <option value="Travel">Travel</option>
@@ -136,12 +137,18 @@
             <div class="muted" id="cardCountText">0 cards</div>
             <div class="form-foot-actions">
               <button id="deleteDeckBtn" class="btn btn-danger" type="button">Delete deck</button>
-              <a id="studyDeckLink" class="btn btn-ghost" href="study.html?deck=core-es">
-                Study this deck
-              </a>
+              <a id="studyDeckLink" class="btn btn-ghost" href="study.html">Study this deck</a>
             </div>
           </div>
         </form>
+      </section>
+
+      <section class="deck-library" aria-label="Your decks">
+        <div class="deck-library-head">
+          <h2>Your decks</h2>
+          <p class="muted">Browse and reopen any deck for editing or study.</p>
+        </div>
+        <div id="deckLibraryList" class="grid" aria-live="polite"></div>
       </section>
 
       <dialog id="confirmDialog" class="dialog">
@@ -158,9 +165,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <p class="muted">
-          URL parameter support: create.html?deck=your-deck-id
-        </p>
+        <p class="muted">Manage your decks and continue editing anytime.</p>
       </div>
     </footer>
 

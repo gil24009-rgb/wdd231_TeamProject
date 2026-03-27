@@ -19,35 +19,68 @@
 
         <nav class="nav" aria-label="Primary">
           <a class="nav-link" href="index.html">Home</a>
-          <a class="nav-link" href="create.html">Create</a>
-          <a class="nav-link is-active" href="study.html?deck=core-es">Study</a>
+          <a class="nav-link" href="create.html">Deck</a>
+          <a class="nav-link is-active" href="study.html">Study</a>
+          <a class="nav-link" href="history.html">History</a>
         </nav>
       </div>
     </header>
 
     <main id="main" class="container study">
-      <section class="study-head" aria-label="Study header">
-        <div>
-          <h1 id="deckTitle">Study</h1>
-          <p class="muted" id="deckMeta">Loading deck...</p>
-        </div>
-
-        <div class="study-controls">
+      <section class="panel study-filter-panel" aria-label="Study filters">
+        <div class="panel-row">
           <div class="field">
-            <label for="modeSelect">Mode</label>
-            <select id="modeSelect" class="select" aria-label="Study mode">
-              <option value="flip">Flip</option>
-              <option value="quiz">Quiz</option>
+            <label for="studyLanguageFilter">Language</label>
+            <select id="studyLanguageFilter" class="select">
+              <option value="all">All</option>
+              <option value="Spanish">Spanish</option>
+              <option value="Korean">Korean</option>
+              <option value="English">English</option>
             </select>
           </div>
 
-          <button id="shuffleBtn" class="btn btn-ghost" type="button">
-            Shuffle
-          </button>
+          <div class="field">
+            <label for="studyCategoryFilter">Category</label>
+            <select id="studyCategoryFilter" class="select">
+              <option value="all">All</option>
+              <option value="Basics">Basics</option>
+              <option value="Travel">Travel</option>
+              <option value="School">School</option>
+              <option value="Daily">Daily</option>
+            </select>
+          </div>
 
-          <a id="editDeckLink" class="btn btn-ghost" href="create.html">
-            Edit deck
-          </a>
+          <div class="field">
+            <label for="studyDeckSelect">Deck</label>
+            <select id="studyDeckSelect" class="select">
+              <option value="">Select a deck</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="study-head" aria-label="Study header">
+        <div>
+          <h1 id="deckTitle">Study</h1>
+          <p class="muted" id="deckMeta">Choose a deck to begin studying.</p>
+        </div>
+
+        <div class="study-progress-card panel" aria-label="Study progress">
+          <div class="study-progress-stat">
+            <span class="study-progress-label">Current card</span>
+            <span class="study-progress-value" id="progressText">0 of 0</span>
+          </div>
+          <div class="study-progress-stat">
+            <span class="study-progress-label">Known cards</span>
+            <span class="study-progress-value" id="knownText">Known 0</span>
+          </div>
+          <div class="study-progress-stat">
+            <span class="study-progress-label">Completion</span>
+            <span class="study-progress-value" id="progressPercentText">0%</span>
+          </div>
+          <div class="progress-bar" aria-hidden="true">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
         </div>
       </section>
 
@@ -76,55 +109,13 @@
             <button id="knownBtn" class="btn btn-primary" type="button">Known</button>
             <button id="againBtn" class="btn btn-ghost" type="button">Again</button>
           </div>
-
-          <div class="progress" aria-label="Progress">
-            <div class="progress-row">
-              <span class="muted" id="progressText">0 of 0</span>
-              <span class="muted" id="knownText">Known 0</span>
-            </div>
-            <div class="progress-bar" aria-hidden="true">
-              <div class="progress-fill" id="progressFill"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="quiz-wrap" id="quizWrap" hidden>
-          <div class="quiz-card">
-            <div class="quiz-question">
-              <span class="quiz-label">Translate</span>
-              <span class="quiz-term" id="quizTerm">...</span>
-            </div>
-
-            <form id="quizForm" class="quiz-form" novalidate>
-              <div class="field">
-                <label for="quizAnswer">Your answer</label>
-                <input
-                  id="quizAnswer"
-                  class="input"
-                  type="text"
-                  autocomplete="off"
-                  required
-                  minlength="1"
-                />
-                <p class="help" id="quizHelp">Press Enter to submit.</p>
-              </div>
-
-              <div class="quiz-actions">
-                <button class="btn btn-primary" type="submit">Check</button>
-                <button id="quizReveal" class="btn btn-ghost" type="button">Reveal</button>
-              </div>
-            </form>
-
-           <div class="quiz-feedback" id="quizFeedback" role="alert" aria-live="assertive"></div>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <p class="muted">
-          Tip: Use keyboard. Tab to controls. Enter to flip or submit quiz.
-        </p>
+        <p class="muted">Choose a deck, flip the card, and continue your study flow.</p>
       </div>
     </footer>
 

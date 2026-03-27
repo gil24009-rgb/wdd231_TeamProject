@@ -1,156 +1,161 @@
 import { getAllDecks } from "./app.js";
-import { qs, normalize, setToast } from "./utils.js";
-import {
-  exportAllData,
-  importAllData,
-  loadHistory,
-  pushHistory,
-  clearHistory
-} from "./storage.js";
+import { loadProgress, loadHistory } from "./storage.js";
+import { qs } from "./utils.js";
 
-const deckFilter = qs("#deckFilter");
-const typeFilter = qs("#typeFilter");
-const searchFilter = qs("#searchFilter");
-const historyList = qs("#historyList");
-const historySummary = qs("#historySummary");
-const clearHistoryBtn = qs("#clearHistoryBtn");
-const exportBtn = qs("#exportBtn");
-const importFile = qs("#importFile");
+const historyLanguageTabs = qs("#historyLanguageTabs");
+const historyAccordion = qs("#historyAccordion");
 
-let decksById = {};
-let history = [];
+let allDecks = [];
+let progressMap = {};
+let historyLog = [];
+let activeLanguage = "English";
 
-function fmtTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleString();
-}
+const categories = ["Basics", "Travel", "School", "Daily"];
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    return map[c] || c;
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+    return map[char] || char;
   });
 }
 
-function render() {
-  const deckId = deckFilter.value;
-  const type = typeFilter.value;
-  const q = normalize(searchFilter.value);
+function getDeckHistoryCount(deckId) {
+  return historyLog.filter((entry) => entry.deckId === deckId && entry.type === "study").length;
+}
 
-  const filtered = history.filter((h) => {
-    const okDeck = deckId === "all" || h.deckId === deckId;
-    const okType = type === "all" || h.type === type;
-    const deckName = decksById[h.deckId]?.name || h.deckId || "";
-    const text = normalize(`${deckName} ${h.message || ""} ${h.action || ""}`);
-    const okQ = !q || text.includes(q);
-    return okDeck && okType && okQ;
-  });
+function buildCategoryDecks(language, category) {
+  return allDecks
+    .filter((deck) => deck.language === language && deck.category === category)
+    .map((deck) => {
+      const progress = progressMap[deck.id] || { known: {}, seen: 0 };
+      const totalCards = (deck.cards || []).length;
+      const knownCount = Object.keys(progress.known || {}).length;
+      const seenCount = progress.seen || 0;
+      const completion = totalCards > 0 ? Math.round((knownCount / totalCards) * 100) : 0;
+      const historyCount = getDeckHistoryCount(deck.id);
 
-  historySummary.textContent = `${filtered.length} items shown. ${history.length} total.`;
+      return {
+        ...deck,
+        totalCards,
+        knownCount,
+        seenCount,
+        completion,
+        historyCount
+      };
+    });
+}
 
-  historyList.innerHTML = "";
-  if (filtered.length === 0) {
-    historyList.innerHTML = `<div class="history-item">No history matches your filters.</div>`;
-    return;
-  }
-
-  for (const h of filtered) {
-    const deckName = decksById[h.deckId]?.name || "Unknown deck";
-    const title = h.deckId ? `${deckName}` : "System";
-    const msg = h.message || "";
-    const action = h.action ? ` · ${h.action}` : "";
-    const item = document.createElement("div");
-    item.className = "history-item";
-    item.innerHTML = `
-      <div class="history-top">
-        <div class="history-title">
-          <span class="tag">${escapeHtml(h.type)}</span>
-          <span>${escapeHtml(title)}${escapeHtml(action)}</span>
-        </div>
-        <div class="history-time">${escapeHtml(fmtTime(h.at))}</div>
+function createDeckItem(deck) {
+  const item = document.createElement("div");
+  item.className = "history-deck-item";
+  item.innerHTML = `
+    <div class="history-deck-top">
+      <div class="history-deck-name">${escapeHtml(deck.name)}</div>
+      <span class="badge">${escapeHtml(deck.category)}</span>
+    </div>
+    <div class="history-deck-stats">
+      <div class="history-stat">
+        <span class="history-stat-label">Study actions</span>
+        <span class="history-stat-value">${deck.historyCount}</span>
       </div>
-      <div class="history-msg">${escapeHtml(msg)}</div>
-    `;
-    historyList.appendChild(item);
+      <div class="history-stat">
+        <span class="history-stat-label">Known cards</span>
+        <span class="history-stat-value">${deck.knownCount} / ${deck.totalCards}</span>
+      </div>
+      <div class="history-stat">
+        <span class="history-stat-label">Completion</span>
+        <span class="history-stat-value">${deck.completion}%</span>
+      </div>
+    </div>
+  `;
+  return item;
+}
+
+function createCategoryCard(language, category) {
+  const decks = buildCategoryDecks(language, category);
+
+  const card = document.createElement("section");
+  card.className = "history-category-card";
+
+  const totalDecks = decks.length;
+  const studiedDecks = decks.filter((deck) => deck.historyCount > 0 || deck.knownCount > 0).length;
+
+  card.innerHTML = `
+    <button class="history-category-toggle" type="button" aria-expanded="false">
+      <span class="history-category-title">
+        <span class="history-category-name">${escapeHtml(category)}</span>
+        <span class="history-category-meta">${studiedDecks} active decks · ${totalDecks} total decks</span>
+      </span>
+      <span class="history-chevron" aria-hidden="true">⌄</span>
+    </button>
+    <div class="history-category-body"></div>
+  `;
+
+  const toggle = card.querySelector(".history-category-toggle");
+  const body = card.querySelector(".history-category-body");
+
+  if (decks.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "history-empty";
+    empty.textContent = "No decks available in this category.";
+    body.appendChild(empty);
+  } else {
+    decks.forEach((deck) => {
+      body.appendChild(createDeckItem(deck));
+    });
   }
+
+  toggle.addEventListener("click", () => {
+    const isOpen = card.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  return card;
+}
+
+function renderLanguageTabs() {
+  const buttons = Array.from(historyLanguageTabs.querySelectorAll(".language-tab"));
+  buttons.forEach((button) => {
+    const isActive = button.dataset.language === activeLanguage;
+    button.classList.toggle("is-active", isActive);
+  });
+}
+
+function renderAccordion() {
+  historyAccordion.innerHTML = "";
+  categories.forEach((category) => {
+    historyAccordion.appendChild(createCategoryCard(activeLanguage, category));
+  });
+}
+
+function initLanguageTabs() {
+  historyLanguageTabs.addEventListener("click", (event) => {
+    const button = event.target.closest(".language-tab");
+    if (!button) return;
+
+    activeLanguage = button.dataset.language;
+    renderLanguageTabs();
+    renderAccordion();
+  });
 }
 
 async function init() {
-  const decks = await getAllDecks();
-  decksById = Object.fromEntries(decks.map((d) => [d.id, d]));
+  allDecks = await getAllDecks();
+  progressMap = loadProgress();
+  historyLog = loadHistory();
 
-  for (const d of decks) {
-    const opt = document.createElement("option");
-    opt.value = d.id;
-    opt.textContent = d.name;
-    deckFilter.appendChild(opt);
-  }
-
-  history = loadHistory();
-
-  deckFilter.addEventListener("change", render);
-  typeFilter.addEventListener("change", render);
-  searchFilter.addEventListener("input", render);
-
-  clearHistoryBtn.addEventListener("click", () => {
-    clearHistory();
-    history = loadHistory();
-    setToast("History cleared.");
-    render();
-  });
-
-  exportBtn.addEventListener("click", async () => {
-    const blob = exportAllData();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `lexibridge-backup-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    pushHistory({
-      type: "export",
-      deckId: "",
-      action: "export",
-      message: "Exported local data backup."
-    });
-
-    history = loadHistory();
-    setToast("Exported.");
-    render();
-  });
-
-  importFile.addEventListener("change", async () => {
-    const file = importFile.files && importFile.files[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      const result = importAllData(data);
-
-      pushHistory({
-        type: "import",
-        deckId: "",
-        action: "import",
-        message: `Imported. Decks ${result.decks}. Progress ${result.progress}. History ${result.history}.`
-      });
-
-      history = loadHistory();
-      setToast("Imported.");
-      window.setTimeout(() => window.location.reload(), 350);
-    } catch (e) {
-      setToast(`Import failed: ${String(e.message || e)}`);
-    } finally {
-      importFile.value = "";
-    }
-  });
-
-  render();
+  renderLanguageTabs();
+  renderAccordion();
+  initLanguageTabs();
 }
 
-init().catch((e) => {
-  historySummary.textContent = `Error: ${String(e.message || e)}`;
+init().catch((error) => {
+  console.error(error);
+  historyAccordion.innerHTML = `<div class="history-empty">Failed to load history view.</div>`;
 });

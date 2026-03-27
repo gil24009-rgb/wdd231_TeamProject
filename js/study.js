@@ -1,16 +1,13 @@
-import { getDeckById } from "./app.js";
-import { qs, getParam, setToast, clamp, normalize } from "./utils.js";
-import { getDeckProgress, setDeckProgress, bumpStreak, pushHistory } from "./storage.js";
+import { getAllDecks, getDeckById } from "./app.js";
+import { qs, getParam, clamp, setToast } from "./utils.js";
+import { getDeckProgress, setDeckProgress } from "./storage.js";
+
+const studyLanguageFilter = qs("#studyLanguageFilter");
+const studyCategoryFilter = qs("#studyCategoryFilter");
+const studyDeckSelect = qs("#studyDeckSelect");
 
 const deckTitle = qs("#deckTitle");
 const deckMeta = qs("#deckMeta");
-const modeSelect = qs("#modeSelect");
-const shuffleBtn = qs("#shuffleBtn");
-const editDeckLink = qs("#editDeckLink");
-
-const flipWrap = qs("#flipWrap");
-const quizWrap = qs("#quizWrap");
-
 const flipCard = qs("#flipCard");
 const termText = qs("#termText");
 const meaningText = qs("#meaningText");
@@ -21,244 +18,225 @@ const againBtn = qs("#againBtn");
 
 const progressText = qs("#progressText");
 const knownText = qs("#knownText");
+const progressPercentText = qs("#progressPercentText");
 const progressFill = qs("#progressFill");
 
-const quizTerm = qs("#quizTerm");
-const quizForm = qs("#quizForm");
-const quizAnswer = qs("#quizAnswer");
-const quizReveal = qs("#quizReveal");
-const quizFeedback = qs("#quizFeedback");
-
-let deck = null;
-let list = [];
-let index = 0;
+let allDecks = [];
+let filteredDecks = [];
+let activeDeck = null;
+let activeCards = [];
+let currentIndex = 0;
 let knownSet = new Set();
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+function shuffleCards(cards) {
+  return cards.map((card) => ({ ...card }));
+}
+
+function renderDeckOptions() {
+  const selectedId = activeDeck?.id || studyDeckSelect.value || "";
+
+  studyDeckSelect.innerHTML = `<option value="">Select a deck</option>`;
+
+  filteredDecks.forEach((deck) => {
+    const option = document.createElement("option");
+    option.value = deck.id;
+    option.textContent = `${deck.name} · ${deck.language} · ${deck.category}`;
+    if (deck.id === selectedId) option.selected = true;
+    studyDeckSelect.appendChild(option);
+  });
+}
+
+function applyFilters() {
+  const language = studyLanguageFilter.value;
+  const category = studyCategoryFilter.value;
+
+  filteredDecks = allDecks.filter((deck) => {
+    const matchLanguage = language === "all" || deck.language === language;
+    const matchCategory = category === "all" || deck.category === category;
+    return matchLanguage && matchCategory;
+  });
+
+  renderDeckOptions();
+
+  if (!filteredDecks.some((deck) => deck.id === activeDeck?.id)) {
+    if (filteredDecks.length > 0) {
+      loadDeck(filteredDecks[0].id);
+      studyDeckSelect.value = filteredDecks[0].id;
+    } else {
+      clearStudyState();
+    }
   }
-  return a;
 }
 
-function currentCard() {
-  return list[index] || null;
-}
+function clearStudyState() {
+  activeDeck = null;
+  activeCards = [];
+  currentIndex = 0;
+  knownSet = new Set();
 
-function renderFlip() {
-  const c = currentCard();
-  if (!c) return;
-
+  deckTitle.textContent = "Study";
+  deckMeta.textContent = "No deck matches the selected filters.";
+  termText.textContent = "...";
+  meaningText.textContent = "...";
+  exampleText.textContent = "";
+  progressText.textContent = "0 of 0";
+  knownText.textContent = "Known 0";
+  progressPercentText.textContent = "0%";
+  progressFill.style.width = "0%";
   flipCard.classList.remove("is-flipped");
-  termText.textContent = c.term;
-  meaningText.textContent = c.meaning;
-  exampleText.textContent = c.example ? c.example : "";
 }
 
-function renderQuiz() {
-  const c = currentCard();
-  if (!c) return;
+function renderCard() {
+  const card = activeCards[currentIndex];
+  if (!card) {
+    termText.textContent = "Done";
+    meaningText.textContent = "You finished this deck.";
+    exampleText.textContent = "";
+    return;
+  }
 
-  quizTerm.textContent = c.term;
-  quizAnswer.value = "";
-  quizFeedback.textContent = "";
-  quizAnswer.focus();
+  termText.textContent = card.term;
+  meaningText.textContent = card.meaning;
+  exampleText.textContent = card.example || "";
+  flipCard.classList.remove("is-flipped");
 }
 
 function updateProgress() {
-  const total = list.length;
-  const seen = clamp(index + 1, 0, total);
-  progressText.textContent = `${seen} of ${total}`;
+  const total = activeCards.length;
+  const current = total > 0 ? clamp(currentIndex + 1, 0, total) : 0;
+  const completion = total > 0 ? Math.round((current / total) * 100) : 0;
+
+  progressText.textContent = `${current} of ${total}`;
   knownText.textContent = `Known ${knownSet.size}`;
-  const pct = total ? Math.round((seen / total) * 100) : 0;
-  progressFill.style.width = `${pct}%`;
+  progressPercentText.textContent = `${completion}%`;
+  progressFill.style.width = `${completion}%`;
 }
 
 function persistProgress() {
-  const knownObj = {};
-  for (const id of knownSet) knownObj[id] = true;
+  if (!activeDeck) return;
 
-  setDeckProgress(deck.id, {
-    known: knownObj,
-    seen: index + 1,
+  const known = {};
+  knownSet.forEach((cardId) => {
+    known[cardId] = true;
+  });
+
+  setDeckProgress(activeDeck.id, {
+    known,
+    seen: currentIndex + 1,
     updatedAt: Date.now()
   });
 }
 
-function nextCard() {
-  if (index < list.length - 1) {
-    index += 1;
-    updateModeView();
+function loadDeck(deckId) {
+  const deck = allDecks.find((item) => item.id === deckId);
+  if (!deck) {
+    clearStudyState();
+    return;
+  }
+
+  activeDeck = deck;
+  activeCards = shuffleCards(deck.cards || []);
+  currentIndex = 0;
+
+  const progress = getDeckProgress(deck.id);
+  knownSet = new Set(Object.keys(progress.known || {}));
+
+  deckTitle.textContent = deck.name;
+  deckMeta.textContent = `${deck.language} · ${deck.category} · ${(deck.cards || []).length} cards`;
+
+  renderCard();
+  updateProgress();
+}
+
+function goNextCard() {
+  if (!activeDeck || activeCards.length === 0) return;
+
+  if (currentIndex < activeCards.length - 1) {
+    currentIndex += 1;
+    renderCard();
     updateProgress();
     persistProgress();
     return;
   }
 
-  bumpStreak();
-
-  pushHistory({
-    type: "study",
-    deckId: deck.id,
-    action: "complete",
-    message: `Completed deck. Known ${knownSet.size} of ${list.length}.`
-  });
-
-  setToast("Deck complete. Nice work.");
-  updateProgress();
   persistProgress();
+  setToast("You reached the end of this deck.");
 }
 
-function markKnown() {
-  const c = currentCard();
-  if (!c) return;
-  knownSet.add(c.id);
+function handleKnown() {
+  const currentCard = activeCards[currentIndex];
+  if (!currentCard) return;
 
-  pushHistory({
-    type: "study",
-    deckId: deck.id,
-    action: "known",
-    message: `Marked known: ${c.term}`
-  });
-
-  nextCard();
+  knownSet.add(currentCard.id);
+  goNextCard();
 }
 
-function markAgain() {
-  const c = currentCard();
-  if (c) {
-    pushHistory({
-      type: "study",
-      deckId: deck.id,
-      action: "again",
-      message: `Marked again: ${c.term}`
-    });
+function handleAgain() {
+  goNextCard();
+}
+
+async function initDeckState() {
+  allDecks = await getAllDecks();
+
+  const urlDeckId = getParam("deck");
+  let initialDeck = null;
+
+  if (urlDeckId) {
+    initialDeck = await getDeckById(urlDeckId);
   }
-  nextCard();
-}
 
-function updateModeView() {
-  const mode = modeSelect.value;
-  if (mode === "quiz") {
-    flipWrap.hidden = true;
-    quizWrap.hidden = false;
-    renderQuiz();
+  if (initialDeck) {
+    studyLanguageFilter.value = initialDeck.language;
+    studyCategoryFilter.value = initialDeck.category;
+  }
+
+  applyFilters();
+
+  if (initialDeck && filteredDecks.some((deck) => deck.id === initialDeck.id)) {
+    studyDeckSelect.value = initialDeck.id;
+    loadDeck(initialDeck.id);
+  } else if (filteredDecks.length > 0) {
+    studyDeckSelect.value = filteredDecks[0].id;
+    loadDeck(filteredDecks[0].id);
   } else {
-    quizWrap.hidden = true;
-    flipWrap.hidden = false;
-    renderFlip();
+    clearStudyState();
   }
 }
 
-async function init() {
-  const deckId = getParam("deck") || "core-es";
-  deck = await getDeckById(deckId);
+function initEvents() {
+  studyLanguageFilter.addEventListener("change", applyFilters);
+  studyCategoryFilter.addEventListener("change", applyFilters);
 
-  if (!deck) {
-    deckTitle.textContent = "Deck not found";
-    deckMeta.textContent = "Go back to Home and pick a valid deck.";
-    flipWrap.hidden = true;
-    quizWrap.hidden = true;
-    return;
-  }
-
-  deckTitle.textContent = deck.name;
-  deckMeta.textContent = `${deck.language} · ${deck.category} · ${deck.cards.length} cards`;
-
-  editDeckLink.href = `create.html?deck=${encodeURIComponent(deck.id)}`;
-
-  list = deck.cards.map((c) => ({ ...c }));
-  const saved = getDeckProgress(deck.id);
-  knownSet = new Set(Object.keys(saved.known || {}));
-  index = 0;
-
-  updateModeView();
-  updateProgress();
+  studyDeckSelect.addEventListener("change", () => {
+    if (!studyDeckSelect.value) {
+      clearStudyState();
+      return;
+    }
+    loadDeck(studyDeckSelect.value);
+  });
 
   flipCard.addEventListener("click", () => {
+    if (!activeDeck) return;
     flipCard.classList.toggle("is-flipped");
   });
 
-  flipCard.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
+  flipCard.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
       flipCard.click();
     }
   });
 
-  knownBtn.addEventListener("click", markKnown);
-  againBtn.addEventListener("click", markAgain);
-
-  shuffleBtn.addEventListener("click", () => {
-    list = shuffle(list);
-    index = 0;
-
-    pushHistory({
-      type: "study",
-      deckId: deck.id,
-      action: "shuffle",
-      message: "Shuffled deck order."
-    });
-
-    setToast("Shuffled.");
-    updateModeView();
-    updateProgress();
-    persistProgress();
-  });
-
-  modeSelect.addEventListener("change", () => {
-    updateModeView();
-  });
-
-  quizForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const c = currentCard();
-    if (!c) return;
-
-    const user = normalize(quizAnswer.value);
-    const target = normalize(c.meaning);
-
-    if (!user) {
-      quizFeedback.textContent = "Type an answer first.";
-      return;
-    }
-
-    if (user === target) {
-      quizFeedback.textContent = "Correct.";
-      knownSet.add(c.id);
-
-      pushHistory({
-        type: "study",
-        deckId: deck.id,
-        action: "quiz-correct",
-        message: `Correct answer for: ${c.term}`
-      });
-
-      nextCard();
-    } else {
-      quizFeedback.textContent = "Not quite. Try again.";
-      quizAnswer.select();
-    }
-  });
-
-  quizReveal.addEventListener("click", () => {
-    const c = currentCard();
-    if (!c) return;
-    quizFeedback.textContent = `Answer: ${c.meaning}`;
-
-    pushHistory({
-      type: "study",
-      deckId: deck.id,
-      action: "reveal",
-      message: `Revealed answer for: ${c.term}`
-    });
-
-    setToast("Revealed.");
-  });
+  knownBtn.addEventListener("click", handleKnown);
+  againBtn.addEventListener("click", handleAgain);
 }
 
-init().catch((e) => {
-  deckTitle.textContent = "Error";
-  deckMeta.textContent = String(e.message || e);
+async function init() {
+  initEvents();
+  await initDeckState();
+}
+
+init().catch((error) => {
+  console.error(error);
+  setToast("Failed to load the study page.");
 });

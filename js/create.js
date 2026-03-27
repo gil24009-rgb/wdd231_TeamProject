@@ -1,6 +1,6 @@
-import { getDeckById, isBaseDeck } from "./app.js";
-import { qs, getParam, uid, setToast } from "./utils.js";
-import { upsertDeckAnySource, deleteDeckAnySource, pushHistory } from "./storage.js";
+import { getAllDecks, getDeckById, isBaseDeck } from "./app.js";
+import { qs, uid, getParam, setToast } from "./utils.js";
+import { upsertDeckAnySource, deleteDeckAnySource } from "./storage.js";
 
 const deckForm = qs("#deckForm");
 const deckIdInput = qs("#deckId");
@@ -16,210 +16,195 @@ const deckCategoryError = qs("#deckCategoryError");
 const cardRows = qs("#cardRows");
 const addCardBtn = qs("#addCardBtn");
 const addSampleBtn = qs("#addSampleBtn");
-
-const cardCountText = qs("#cardCountText");
 const deleteDeckBtn = qs("#deleteDeckBtn");
 const studyDeckLink = qs("#studyDeckLink");
-
+const cardCountText = qs("#cardCountText");
+const deckLibraryList = qs("#deckLibraryList");
 const confirmDialog = qs("#confirmDialog");
 
-let currentDeck = null;
-let lastActiveElement = null;
+let activeDeckId = "";
 
-function escapeAttr(str) {
-  return String(str).replace(/[&<>"']/g, (c) => {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    return map[c] || c;
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+    return map[char] || char;
   });
 }
 
-function getFocusable(root) {
+function getFocusableElements(container) {
   const selectors =
-    'a[href], button:not([disabled]), textarea, input, select, details, [tabindex]:not([tabindex="-1"])';
-  return Array.from(root.querySelectorAll(selectors)).filter((el) => el.offsetParent !== null);
+    'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+  return Array.from(container.querySelectorAll(selectors)).filter((node) => !node.hidden);
 }
 
 function trapDialogFocus(dialog) {
-  const onKeyDown = (e) => {
-    if (e.key !== "Tab") return;
-    const focusable = getFocusable(dialog);
-    if (focusable.length === 0) return;
+  const focusable = getFocusableElements(dialog);
+  if (focusable.length > 0) {
+    focusable[0].focus();
+  }
 
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
+  const keyHandler = (event) => {
+    if (event.key !== "Tab") return;
 
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
+    const items = getFocusableElements(dialog);
+    if (items.length === 0) return;
+
+    const first = items[0];
+    const last = items[items.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
       last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
       first.focus();
     }
   };
 
-  dialog.addEventListener("keydown", onKeyDown);
+  dialog.addEventListener("keydown", keyHandler, { once: false });
+
   dialog.addEventListener(
     "close",
     () => {
-      dialog.removeEventListener("keydown", onKeyDown);
-      if (lastActiveElement) lastActiveElement.focus();
+      dialog.removeEventListener("keydown", keyHandler);
     },
     { once: true }
   );
-
-  const focusable = getFocusable(dialog);
-  if (focusable[0]) focusable[0].focus();
 }
 
-function setFieldValidity(input, errorEl, message) {
-  if (message) {
-    errorEl.textContent = message;
-    input.setAttribute("aria-invalid", "true");
-  } else {
-    errorEl.textContent = "";
-    input.setAttribute("aria-invalid", "false");
-  }
+function setFieldState(input, errorElement, message = "") {
+  errorElement.textContent = message;
+  input.setAttribute("aria-invalid", message ? "true" : "false");
 }
 
-function cardRowTemplate(card) {
+function createCardRow(card = { id: uid("card"), term: "", meaning: "", example: "" }) {
   const row = document.createElement("div");
   row.className = "table-row";
   row.dataset.cardId = card.id;
 
   row.innerHTML = `
     <div class="field">
-      <input class="input term" type="text" required minlength="1" maxlength="40" value="${escapeAttr(
-        card.term
-      )}" placeholder="Term" />
+      <input class="input term" type="text" value="${escapeHtml(card.term)}" placeholder="Term" />
       <p class="error term-error"></p>
     </div>
-
     <div class="field">
-      <input class="input meaning" type="text" required minlength="1" maxlength="60" value="${escapeAttr(
-        card.meaning
-      )}" placeholder="Meaning" />
+      <input class="input meaning" type="text" value="${escapeHtml(card.meaning)}" placeholder="Meaning" />
       <p class="error meaning-error"></p>
     </div>
-
     <div class="field">
-      <input class="input example" type="text" maxlength="90" value="${escapeAttr(
-        card.example || ""
-      )}" placeholder="Example (optional)" />
+      <input class="input example" type="text" value="${escapeHtml(card.example || "")}" placeholder="Example (optional)" />
       <p class="help">Optional</p>
     </div>
-
     <div class="row-actions">
       <button class="btn btn-ghost move-up" type="button">Up</button>
       <button class="btn btn-ghost move-down" type="button">Down</button>
-      <button class="btn btn-danger remove" type="button">Remove</button>
+      <button class="btn btn-danger remove-row" type="button">Remove</button>
     </div>
   `;
 
   row.querySelector(".move-up").addEventListener("click", () => moveRow(row, -1));
   row.querySelector(".move-down").addEventListener("click", () => moveRow(row, 1));
-  row.querySelector(".remove").addEventListener("click", () => {
+  row.querySelector(".remove-row").addEventListener("click", () => {
     row.remove();
-    updateCount();
+    updateCardCount();
   });
 
   return row;
 }
 
-function moveRow(row, dir) {
+function moveRow(row, direction) {
   const rows = Array.from(cardRows.children);
-  const i = rows.indexOf(row);
-  const j = i + dir;
-  if (j < 0 || j >= rows.length) return;
+  const currentIndex = rows.indexOf(row);
+  const nextIndex = currentIndex + direction;
 
-  if (dir < 0) cardRows.insertBefore(row, rows[j]);
-  else cardRows.insertBefore(rows[j], row);
+  if (nextIndex < 0 || nextIndex >= rows.length) return;
 
-  updateCount();
+  if (direction < 0) {
+    cardRows.insertBefore(row, rows[nextIndex]);
+  } else {
+    cardRows.insertBefore(rows[nextIndex], row);
+  }
+
+  updateCardCount();
 }
 
-function updateCount() {
-  const n = cardRows.children.length;
-  cardCountText.textContent = `${n} cards`;
+function updateCardCount() {
+  const count = cardRows.children.length;
+  cardCountText.textContent = `${count} cards`;
 }
 
-function validateDeckFields() {
-  let ok = true;
+function clearFormValidation() {
+  setFieldState(deckName, deckNameError, "");
+  setFieldState(deckLanguage, deckLanguageError, "");
+  setFieldState(deckCategory, deckCategoryError, "");
+}
 
-  const name = deckName.value.trim();
-  setFieldValidity(deckName, deckNameError, "");
-  setFieldValidity(deckLanguage, deckLanguageError, "");
-  setFieldValidity(deckCategory, deckCategoryError, "");
+function validateForm() {
+  let isValid = true;
+  clearFormValidation();
 
-  if (!name || name.length < 2) {
-    setFieldValidity(deckName, deckNameError, "Deck name is required (min 2 chars).");
-    ok = false;
+  if (!deckName.value.trim() || deckName.value.trim().length < 2) {
+    setFieldState(deckName, deckNameError, "Deck name is required and must be at least 2 characters.");
+    isValid = false;
   }
 
   if (!deckLanguage.value) {
-    setFieldValidity(deckLanguage, deckLanguageError, "Language is required.");
-    ok = false;
+    setFieldState(deckLanguage, deckLanguageError, "Please choose a language.");
+    isValid = false;
   }
 
   if (!deckCategory.value) {
-    setFieldValidity(deckCategory, deckCategoryError, "Category is required.");
-    ok = false;
+    setFieldState(deckCategory, deckCategoryError, "Please choose a category.");
+    isValid = false;
   }
 
-  return ok;
-}
-
-function validateCardRows() {
-  let ok = true;
   const rows = Array.from(cardRows.children);
+  if (rows.length === 0) {
+    setToast("Add at least one card.");
+    isValid = false;
+  }
 
-  for (const row of rows) {
+  rows.forEach((row) => {
     const term = row.querySelector(".term");
     const meaning = row.querySelector(".meaning");
+    const termError = row.querySelector(".term-error");
+    const meaningError = row.querySelector(".meaning-error");
 
-    const termErr = row.querySelector(".term-error");
-    const meaningErr = row.querySelector(".meaning-error");
-
-    termErr.textContent = "";
-    meaningErr.textContent = "";
+    termError.textContent = "";
+    meaningError.textContent = "";
 
     if (!term.value.trim()) {
-      termErr.textContent = "Required.";
-      ok = false;
+      termError.textContent = "Required.";
+      isValid = false;
     }
 
     if (!meaning.value.trim()) {
-      meaningErr.textContent = "Required.";
-      ok = false;
+      meaningError.textContent = "Required.";
+      isValid = false;
     }
-  }
+  });
 
-  if (rows.length === 0) {
-    setToast("Add at least one card.");
-    ok = false;
-  }
-
-  return ok;
+  return isValid;
 }
 
-function collectDeck() {
-  const id = deckIdInput.value || uid("deck");
-
+function collectDeckData() {
   const cards = Array.from(cardRows.children).map((row) => {
-    const cardId = row.dataset.cardId || uid("card");
-    const term = row.querySelector(".term").value.trim();
-    const meaning = row.querySelector(".meaning").value.trim();
-    const example = row.querySelector(".example").value.trim();
-
     return {
-      id: cardId,
-      term,
-      meaning,
-      example: example || ""
+      id: row.dataset.cardId || uid("card"),
+      term: row.querySelector(".term").value.trim(),
+      meaning: row.querySelector(".meaning").value.trim(),
+      example: row.querySelector(".example").value.trim()
     };
   });
 
   return {
-    id,
+    id: deckIdInput.value || uid("deck"),
     name: deckName.value.trim(),
     language: deckLanguage.value,
     category: deckCategory.value,
@@ -228,128 +213,190 @@ function collectDeck() {
   };
 }
 
-function addCard(card = { id: uid("card"), term: "", meaning: "", example: "" }) {
-  cardRows.appendChild(cardRowTemplate(card));
-  updateCount();
-}
-
-function loadIntoForm(d) {
-  currentDeck = d;
-  deckIdInput.value = d.id;
-  deckName.value = d.name || "";
-  deckLanguage.value = d.language || "";
-  deckCategory.value = d.category || "";
-  deckDescription.value = d.description || "";
-
-  deckName.setAttribute("aria-invalid", "false");
-  deckLanguage.setAttribute("aria-invalid", "false");
-  deckCategory.setAttribute("aria-invalid", "false");
-
+function resetCardRows() {
   cardRows.innerHTML = "";
-  for (const c of d.cards || []) addCard(c);
-
-  studyDeckLink.href = `study.html?deck=${encodeURIComponent(d.id)}`;
-  updateCount();
+  updateCardCount();
 }
 
-async function confirmDelete() {
-  const id = deckIdInput.value;
-  if (!id) return false;
+function loadDeckIntoForm(deck) {
+  activeDeckId = deck.id;
+  deckIdInput.value = deck.id;
+  deckName.value = deck.name || "";
+  deckLanguage.value = deck.language || "";
+  deckCategory.value = deck.category || "";
+  deckDescription.value = deck.description || "";
 
-  lastActiveElement = document.activeElement;
+  resetCardRows();
+  (deck.cards || []).forEach((card) => {
+    cardRows.appendChild(createCardRow(card));
+  });
+
+  studyDeckLink.href = `study.html?deck=${encodeURIComponent(deck.id)}`;
+  updateCardCount();
+  clearFormValidation();
+}
+
+function initNewDeck() {
+  activeDeckId = "";
+  deckIdInput.value = "";
+  deckForm.reset();
+  resetCardRows();
+  cardRows.appendChild(createCardRow());
+  studyDeckLink.href = "study.html";
+  updateCardCount();
+  clearFormValidation();
+}
+
+function createDeckLibraryCard(deck) {
+  const article = document.createElement("article");
+  article.className = "card";
+  article.innerHTML = `
+    <div class="card-top">
+      <div>
+        <h3>${escapeHtml(deck.name)}</h3>
+        <p class="muted">${escapeHtml(deck.description || "No description")}</p>
+      </div>
+      <span class="badge">${escapeHtml(deck.language)} · ${escapeHtml(deck.category)}</span>
+    </div>
+    <div class="muted">Cards: ${(deck.cards || []).length}</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primary edit-deck-btn" type="button">Edit</button>
+      <a class="btn btn-ghost" href="study.html?deck=${encodeURIComponent(deck.id)}">Study</a>
+    </div>
+  `;
+
+  article.querySelector(".edit-deck-btn").addEventListener("click", () => {
+    loadDeckIntoForm(deck);
+    setToast(`Loaded ${deck.name}.`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  return article;
+}
+
+async function renderDeckLibrary() {
+  const decks = await getAllDecks();
+  deckLibraryList.innerHTML = "";
+
+  if (decks.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "panel";
+    empty.textContent = "No decks available yet.";
+    deckLibraryList.appendChild(empty);
+    return;
+  }
+
+  decks.forEach((deck) => {
+    deckLibraryList.appendChild(createDeckLibraryCard(deck));
+  });
+}
+
+async function openDeckFromUrl() {
+  const deckId = getParam("deck");
+  if (!deckId) {
+    initNewDeck();
+    return;
+  }
+
+  const deck = await getDeckById(deckId);
+  if (!deck) {
+    initNewDeck();
+    setToast("Deck not found. Starting a new one.");
+    return;
+  }
+
+  loadDeckIntoForm(deck);
+}
+
+async function handleSave(event) {
+  event.preventDefault();
+
+  if (!validateForm()) {
+    setToast("Fix validation errors before saving.");
+    return;
+  }
+
+  const deck = collectDeckData();
+  const isBase = await isBaseDeck(deck.id);
+
+  upsertDeckAnySource(deck, isBase ? "base" : "user");
+  activeDeckId = deck.id;
+  deckIdInput.value = deck.id;
+  studyDeckLink.href = `study.html?deck=${encodeURIComponent(deck.id)}`;
+
+  await renderDeckLibrary();
+  setToast("Deck saved.");
+}
+
+async function handleDelete() {
+  const deckId = deckIdInput.value || activeDeckId;
+  if (!deckId) {
+    setToast("There is no deck to delete.");
+    return;
+  }
 
   if (typeof confirmDialog.showModal === "function") {
     confirmDialog.showModal();
     trapDialogFocus(confirmDialog);
-    const res = await new Promise((resolve) => {
+
+    const result = await new Promise((resolve) => {
       confirmDialog.addEventListener(
         "close",
         () => resolve(confirmDialog.returnValue),
         { once: true }
       );
     });
-    return res === "confirm";
+
+    if (result !== "confirm") return;
+  } else {
+    const approved = window.confirm("Delete this deck?");
+    if (!approved) return;
   }
 
-  return window.confirm("Delete this deck?");
+  deleteDeckAnySource(deckId);
+  initNewDeck();
+  await renderDeckLibrary();
+  setToast("Deck deleted.");
 }
 
-async function init() {
-  const deckId = getParam("deck");
-
-  if (deckId) {
-    const found = await getDeckById(deckId);
-    if (found) {
-      loadIntoForm(found);
-      setToast("Deck loaded.");
-    } else {
-      setToast("Deck not found. Creating a new deck.");
-      addCard();
-    }
-  } else {
-    addCard();
-  }
-
-  addCardBtn.addEventListener("click", () => addCard());
+function initButtons() {
+  addCardBtn.addEventListener("click", () => {
+    cardRows.appendChild(createCardRow());
+    updateCardCount();
+  });
 
   addSampleBtn.addEventListener("click", () => {
-    addCard({ id: uid("card"), term: "Hello", meaning: "안녕하세요", example: "" });
-    addCard({ id: uid("card"), term: "Thank you", meaning: "감사합니다", example: "" });
+    cardRows.appendChild(
+      createCardRow({
+        id: uid("card"),
+        term: "Hello",
+        meaning: "안녕하세요",
+        example: "Hello, nice to meet you."
+      })
+    );
+    cardRows.appendChild(
+      createCardRow({
+        id: uid("card"),
+        term: "Thank you",
+        meaning: "감사합니다",
+        example: "Thank you for your help."
+      })
+    );
+    updateCardCount();
     setToast("Sample cards added.");
   });
 
-  deckForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const okDeck = validateDeckFields();
-    const okCards = validateCardRows();
-    if (!okDeck || !okCards) {
-      setToast("Fix validation errors.");
-      return;
-    }
-
-    const deck = collectDeck();
-    const base = await isBaseDeck(deck.id);
-
-    upsertDeckAnySource(deck, base ? "base" : "user");
-
-    pushHistory({
-      type: "deck",
-      deckId: deck.id,
-      action: "save",
-      message: base ? "Saved override for base deck." : "Saved user deck."
-    });
-
-    studyDeckLink.href = `study.html?deck=${encodeURIComponent(deck.id)}`;
-    setToast("Saved.");
-  });
-
-  deleteDeckBtn.addEventListener("click", async () => {
-    const id = deckIdInput.value;
-    if (!id) {
-      setToast("Nothing to delete.");
-      return;
-    }
-
-    const ok = await confirmDelete();
-    if (!ok) return;
-
-    deleteDeckAnySource(id);
-
-    pushHistory({
-      type: "deck",
-      deckId: id,
-      action: "delete",
-      message: "Deleted deck."
-    });
-
-    setToast("Deleted.");
-    window.setTimeout(() => {
-      window.location.href = "index.html";
-    }, 400);
-  });
+  deleteDeckBtn.addEventListener("click", handleDelete);
+  deckForm.addEventListener("submit", handleSave);
 }
 
-init().catch((e) => {
-  setToast(String(e.message || e));
+async function init() {
+  initButtons();
+  await openDeckFromUrl();
+  await renderDeckLibrary();
+}
+
+init().catch((error) => {
+  console.error(error);
+  setToast("Failed to load the deck page.");
 });

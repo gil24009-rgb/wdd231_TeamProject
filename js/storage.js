@@ -1,14 +1,13 @@
 const KEY_USER_DECKS = "lexibridge.userDecks.v1";
-const KEY_OVERRIDES = "lexibridge.baseOverrides.v1";
-const KEY_DELETED = "lexibridge.deletedDeckIds.v1";
-
+const KEY_BASE_OVERRIDES = "lexibridge.baseOverrides.v1";
+const KEY_DELETED_IDS = "lexibridge.deletedDeckIds.v1";
 const KEY_PROGRESS = "lexibridge.progress.v1";
-const KEY_STREAK = "lexibridge.streak.v1";
 const KEY_HISTORY = "lexibridge.history.v1";
 
 function safeParse(key, fallback) {
   try {
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
   } catch {
     return fallback;
   }
@@ -23,64 +22,19 @@ export function saveUserDecks(decks) {
 }
 
 export function loadBaseOverrides() {
-  return safeParse(KEY_OVERRIDES, {});
+  return safeParse(KEY_BASE_OVERRIDES, {});
 }
 
-export function saveBaseOverrides(map) {
-  localStorage.setItem(KEY_OVERRIDES, JSON.stringify(map));
+export function saveBaseOverrides(overrides) {
+  localStorage.setItem(KEY_BASE_OVERRIDES, JSON.stringify(overrides));
 }
 
 export function loadDeletedDeckIds() {
-  return safeParse(KEY_DELETED, []);
+  return safeParse(KEY_DELETED_IDS, []);
 }
 
 export function saveDeletedDeckIds(ids) {
-  localStorage.setItem(KEY_DELETED, JSON.stringify(ids));
-}
-
-export function markDeckDeleted(deckId) {
-  const ids = new Set(loadDeletedDeckIds());
-  ids.add(deckId);
-  saveDeletedDeckIds(Array.from(ids));
-  const progress = loadProgress();
-  delete progress[deckId];
-  saveProgress(progress);
-}
-
-export function unmarkDeckDeleted(deckId) {
-  const ids = new Set(loadDeletedDeckIds());
-  ids.delete(deckId);
-  saveDeletedDeckIds(Array.from(ids));
-}
-
-export function upsertDeckAnySource(deck, source = "user") {
-  if (source === "base") {
-    const map = loadBaseOverrides();
-    map[deck.id] = deck;
-    saveBaseOverrides(map);
-    unmarkDeckDeleted(deck.id);
-    return;
-  }
-
-  const decks = loadUserDecks();
-  const idx = decks.findIndex((d) => d.id === deck.id);
-  if (idx >= 0) decks[idx] = deck;
-  else decks.unshift(deck);
-  saveUserDecks(decks);
-  unmarkDeckDeleted(deck.id);
-}
-
-export function deleteDeckAnySource(deckId) {
-  const user = loadUserDecks().filter((d) => d.id !== deckId);
-  saveUserDecks(user);
-
-  const map = loadBaseOverrides();
-  if (map[deckId]) {
-    delete map[deckId];
-    saveBaseOverrides(map);
-  }
-
-  markDeckDeleted(deckId);
+  localStorage.setItem(KEY_DELETED_IDS, JSON.stringify(ids));
 }
 
 export function loadProgress() {
@@ -92,120 +46,108 @@ export function saveProgress(progress) {
 }
 
 export function getDeckProgress(deckId) {
-  const p = loadProgress();
-  return p[deckId] || { known: {}, seen: 0, updatedAt: 0 };
+  const progress = loadProgress();
+  return progress[deckId] || { known: {}, seen: 0, updatedAt: 0 };
 }
 
-export function setDeckProgress(deckId, data) {
-  const p = loadProgress();
-  p[deckId] = { ...data, updatedAt: Date.now() };
-  saveProgress(p);
-}
-
-export function loadStreak() {
-  return safeParse(KEY_STREAK, { count: 0, lastDay: "" });
-}
-
-export function bumpStreak() {
-  const s = loadStreak();
-  const now = new Date();
-  const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-    now.getDate()
-  ).padStart(2, "0")}`;
-
-  if (s.lastDay === day) return s;
-
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const y = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(
-    yesterday.getDate()
-  ).padStart(2, "0")}`;
-
-  const next = { lastDay: day, count: s.lastDay === y ? s.count + 1 : 1 };
-  localStorage.setItem(KEY_STREAK, JSON.stringify(next));
-  return next;
+export function setDeckProgress(deckId, deckProgress) {
+  const progress = loadProgress();
+  progress[deckId] = {
+    known: deckProgress.known || {},
+    seen: deckProgress.seen || 0,
+    updatedAt: deckProgress.updatedAt || Date.now()
+  };
+  saveProgress(progress);
 }
 
 export function loadHistory() {
   return safeParse(KEY_HISTORY, []);
 }
 
-export function saveHistory(items) {
-  localStorage.setItem(KEY_HISTORY, JSON.stringify(items));
+export function saveHistory(history) {
+  localStorage.setItem(KEY_HISTORY, JSON.stringify(history));
 }
 
 export function pushHistory(entry) {
-  const items = loadHistory();
-  const next = [
-    {
-      at: Date.now(),
-      type: entry.type || "study",
-      deckId: entry.deckId || "",
-      action: entry.action || "",
-      message: entry.message || ""
-    },
-    ...items
-  ].slice(0, 250);
-  saveHistory(next);
-  return next;
-}
-
-export function clearHistory() {
-  localStorage.removeItem(KEY_HISTORY);
-}
-
-export function exportAllData() {
-  const payload = {
-    version: 1,
-    exportedAt: Date.now(),
-    userDecks: loadUserDecks(),
-    baseOverrides: loadBaseOverrides(),
-    deletedDeckIds: loadDeletedDeckIds(),
-    progress: loadProgress(),
-    streak: loadStreak(),
-    history: loadHistory()
+  const history = loadHistory();
+  const nextEntry = {
+    at: Date.now(),
+    type: entry.type || "study",
+    deckId: entry.deckId || "",
+    action: entry.action || "",
+    message: entry.message || ""
   };
-  return new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+
+  const nextHistory = [nextEntry, ...history].slice(0, 250);
+  saveHistory(nextHistory);
+  return nextHistory;
 }
 
-export function importAllData(payload) {
-  let decks = 0;
-  let progress = 0;
-  let history = 0;
+export function upsertDeckAnySource(deck, source = "user") {
+  if (source === "base") {
+    const overrides = loadBaseOverrides();
+    overrides[deck.id] = deck;
+    saveBaseOverrides(overrides);
 
-  if (payload && typeof payload === "object") {
-    if (Array.isArray(payload.userDecks)) {
-      saveUserDecks(payload.userDecks);
-      decks += payload.userDecks.length;
-    }
-    if (payload.baseOverrides && typeof payload.baseOverrides === "object") {
-      saveBaseOverrides(payload.baseOverrides);
-      decks += Object.keys(payload.baseOverrides).length;
-    }
-    if (Array.isArray(payload.deletedDeckIds)) {
-      saveDeletedDeckIds(payload.deletedDeckIds);
-    }
-    if (payload.progress && typeof payload.progress === "object") {
-      saveProgress(payload.progress);
-      progress = Object.keys(payload.progress).length;
-    }
-    if (payload.streak && typeof payload.streak === "object") {
-      localStorage.setItem(KEY_STREAK, JSON.stringify(payload.streak));
-    }
-    if (Array.isArray(payload.history)) {
-      saveHistory(payload.history.slice(0, 250));
-      history = payload.history.length;
-    }
+    const deletedIds = loadDeletedDeckIds().filter((id) => id !== deck.id);
+    saveDeletedDeckIds(deletedIds);
+
+    pushHistory({
+      type: "deck",
+      deckId: deck.id,
+      action: "save-base",
+      message: `Updated base deck override for ${deck.name}.`
+    });
+
+    return;
   }
 
-  return { decks, progress, history };
+  const userDecks = loadUserDecks();
+  const existingIndex = userDecks.findIndex((item) => item.id === deck.id);
+
+  if (existingIndex >= 0) {
+    userDecks[existingIndex] = deck;
+  } else {
+    userDecks.unshift(deck);
+  }
+
+  saveUserDecks(userDecks);
+
+  const deletedIds = loadDeletedDeckIds().filter((id) => id !== deck.id);
+  saveDeletedDeckIds(deletedIds);
+
+  pushHistory({
+    type: "deck",
+    deckId: deck.id,
+    action: "save-user",
+    message: `Saved user deck ${deck.name}.`
+  });
 }
 
-export function resetAll() {
-  localStorage.removeItem(KEY_USER_DECKS);
-  localStorage.removeItem(KEY_OVERRIDES);
-  localStorage.removeItem(KEY_DELETED);
-  localStorage.removeItem(KEY_PROGRESS);
-  localStorage.removeItem(KEY_STREAK);
-  localStorage.removeItem(KEY_HISTORY);
+export function deleteDeckAnySource(deckId) {
+  const userDecks = loadUserDecks().filter((deck) => deck.id !== deckId);
+  saveUserDecks(userDecks);
+
+  const overrides = loadBaseOverrides();
+  if (overrides[deckId]) {
+    delete overrides[deckId];
+    saveBaseOverrides(overrides);
+  }
+
+  const deletedIds = new Set(loadDeletedDeckIds());
+  deletedIds.add(deckId);
+  saveDeletedDeckIds(Array.from(deletedIds));
+
+  const progress = loadProgress();
+  if (progress[deckId]) {
+    delete progress[deckId];
+    saveProgress(progress);
+  }
+
+  pushHistory({
+    type: "deck",
+    deckId,
+    action: "delete",
+    message: `Deleted deck ${deckId}.`
+  });
 }

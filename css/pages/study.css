@@ -2,37 +2,64 @@
   padding: 22px 0 10px 0;
 }
 
-.study-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
+.study-filter-panel {
   margin-bottom: 16px;
 }
 
-.study-controls {
+.study .panel-row {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+.study-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.study-progress-card {
+  display: grid;
+  gap: 12px;
+}
+
+.study-progress-stat {
   display: flex;
-  gap: 10px;
-  align-items: end;
-  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.study-progress-label {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.study-progress-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .study-body {
   display: grid;
   gap: 16px;
+  justify-items: center;
 }
 
 .card-wrap {
   display: grid;
   gap: 12px;
   justify-items: center;
+  width: 100%;
 }
 
 .flip-card {
-  width: min(520px, 100%);
-  min-height: 280px;
-  border-radius: var(--radius);
+  width: min(640px, 100%);
+  min-height: 360px;
+  border-radius: 24px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
   box-shadow: var(--shadow);
@@ -45,10 +72,10 @@
   position: relative;
   display: block;
   width: 100%;
-  min-height: 280px;
+  min-height: 360px;
   transform-style: preserve-3d;
   transition: transform 520ms ease;
-  border-radius: var(--radius);
+  border-radius: 24px;
 }
 
 .flip-card.is-flipped .flip-inner {
@@ -62,29 +89,35 @@
   display: grid;
   align-content: center;
   justify-items: center;
-  padding: 20px;
-  gap: 10px;
-  border-radius: var(--radius);
+  padding: 28px;
+  gap: 12px;
+  border-radius: 24px;
 }
 
 .flip-front {
-  background: rgba(23, 107, 135, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(100, 204, 197, 0.18), transparent 35%),
+    rgba(23, 107, 135, 0.08);
 }
 
 .flip-back {
   transform: rotateY(180deg);
-  background: rgba(100, 204, 197, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(23, 107, 135, 0.25), transparent 36%),
+    rgba(100, 204, 197, 0.08);
 }
 
 .flip-label {
   color: var(--muted);
   font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .flip-text {
-  font-size: clamp(1.3rem, 2.3vw, 2rem);
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   text-align: center;
 }
 
@@ -92,7 +125,7 @@
   color: var(--muted);
   font-size: 1rem;
   text-align: center;
-  max-width: 46ch;
+  max-width: 48ch;
 }
 
 .card-actions {
@@ -100,18 +133,6 @@
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
-}
-
-.progress {
-  width: min(520px, 100%);
-  display: grid;
-  gap: 8px;
-}
-
-.progress-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
 }
 
 .progress-bar {
@@ -129,35 +150,20 @@
   transition: width 300ms ease;
 }
 
-.quiz-card {
-  width: min(560px, 100%);
-  margin: 0 auto;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: var(--shadow);
-  padding: 16px;
-  display: grid;
-  gap: 12px;
+@media (min-width: 860px) {
+  .study .panel-row {
+    grid-template-columns: 220px 220px 1fr;
+    align-items: end;
+  }
+
+  .study-head {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
 }
 
-.quiz-label {
-  color: var(--muted);
-}
-
-.quiz-term {
-  font-size: clamp(1.3rem, 2.2vw, 2rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.quiz-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.quiz-feedback {
-  min-height: 22px;
-  color: var(--muted);
+@media (max-width: 680px) {
+  .flip-card,
+  .flip-inner {
+    min-height: 300px;
+  }
 }

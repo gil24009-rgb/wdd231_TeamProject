@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LexiBridge | Flashcards</title>
+    <title>LexiBridge | Home</title>
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/pages/home.css" />
   </head>
@@ -19,92 +19,49 @@
 
         <nav class="nav" aria-label="Primary">
           <a class="nav-link is-active" href="index.html">Home</a>
-          <a class="nav-link" href="create.html">Create</a>
-          <a class="nav-link" href="study.html?deck=core-es">Study</a>
+          <a class="nav-link" href="create.html">Deck</a>
+          <a class="nav-link" href="study.html">Study</a>
           <a class="nav-link" href="history.html">History</a>
         </nav>
       </div>
     </header>
 
-    <main id="main" class="container">
-      <section class="hero">
-        <div class="hero-copy">
-          <h1>Build vocabulary with focused practice.</h1>
-          <p class="muted">
-            Create decks, study with flip cards, and keep progress with local persistence.
+    <main id="main" class="container home">
+      <section class="home-hero" aria-label="Home hero">
+        <div class="home-copy">
+          <h1>LexiBridge</h1>
+          <p class="muted home-description">
+            Build your own vocabulary decks, review terms with interactive flashcards,
+            and track your language learning progress across English, Korean, and Spanish.
           </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="create.html">Create a deck</a>
-            <a class="btn btn-ghost" href="study.html?deck=core-es">Start studying</a>
-          </div>
-        </div>
-
-        <div class="hero-card" role="region" aria-label="Quick stats">
-          <div class="stat">
-            <div class="stat-label">Decks</div>
-            <div class="stat-value" id="statDecks">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Cards</div>
-            <div class="stat-value" id="statCards">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Completion</div>
-            <div class="stat-value" id="statCompletion">0%</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Streak</div>
-            <div class="stat-value" id="statStreak">0</div>
-          </div>
         </div>
       </section>
 
-      <section class="panel" aria-label="Deck controls">
-        <div class="panel-row">
-          <div class="field">
-            <label for="filterLanguage">Language</label>
-            <select id="filterLanguage" class="select" aria-label="Filter decks by language">
-              <option value="all">All</option>
-              <option value="Spanish">Spanish</option>
-              <option value="Korean">Korean</option>
-              <option value="English">English</option>
-            </select>
-          </div>
+      <section class="home-stage" aria-label="Quick start study entry">
+        <button
+          id="homeStudyCard"
+          class="home-study-card"
+          type="button"
+          aria-label="Start studying"
+        >
+          <span class="home-study-card-inner">
+            <span class="home-study-face home-study-front">
+              <span class="home-study-label">Quick Start</span>
+              <span class="home-study-text">Start studying!</span>
+              <span class="home-study-subtext">Flip to continue</span>
+            </span>
+            <span class="home-study-face home-study-back">
+              <span class="home-study-label">Go to Study</span>
+              <span class="home-study-text">Open study page</span>
+              <span class="home-study-subtext">Choose a deck and begin</span>
+            </span>
+          </span>
+        </button>
 
-          <div class="field">
-            <label for="filterCategory">Category</label>
-            <select id="filterCategory" class="select" aria-label="Filter decks by category">
-              <option value="all">All</option>
-              <option value="Basics">Basics</option>
-              <option value="Travel">Travel</option>
-              <option value="School">School</option>
-              <option value="Daily">Daily</option>
-            </select>
-          </div>
-
-          <div class="field search-field">
-            <label for="searchDecks">Search</label>
-            <input
-              id="searchDecks"
-              class="input"
-              type="search"
-              placeholder="Search deck name"
-              autocomplete="off"
-            />
-          </div>
+        <div class="home-bottom-actions">
+          <a class="btn btn-primary home-action-btn" href="create.html">Create a deck</a>
+          <a class="btn btn-ghost home-action-btn" href="history.html">Check your history</a>
         </div>
-      </section>
-
-      <section class="deck-grid" aria-label="Deck list">
-        <div class="deck-grid-head">
-          <h2>Decks</h2>
-          <div class="deck-grid-actions">
-            <button class="btn btn-ghost" id="resetDemo" type="button">Reset demo data</button>
-            <a class="btn btn-ghost" href="history.html">View history</a>
-          </div>
-        </div>
-
-        <div id="deckList" class="grid" aria-live="polite"></div>
       </section>
     </main>
 
@@ -112,7 +69,7 @@
       <div class="container footer-inner">
         <p class="muted">LexiBridge. Built for WDD 231 team project.</p>
         <p class="muted">
-          <a href="create.html">Create</a> · <a href="study.html?deck=core-es">Study</a> ·
+          <a href="create.html">Deck</a> · <a href="study.html">Study</a> ·
           <a href="history.html">History</a>
         </p>
       </div>

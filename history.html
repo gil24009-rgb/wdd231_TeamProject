@@ -19,8 +19,8 @@
 
         <nav class="nav" aria-label="Primary">
           <a class="nav-link" href="index.html">Home</a>
-          <a class="nav-link" href="create.html">Create</a>
-          <a class="nav-link" href="study.html?deck=core-es">Study</a>
+          <a class="nav-link" href="create.html">Deck</a>
+          <a class="nav-link" href="study.html">Study</a>
           <a class="nav-link is-active" href="history.html">History</a>
         </nav>
       </div>
@@ -30,64 +30,32 @@
       <section class="history-head">
         <div>
           <h1>Study history</h1>
-          <p class="muted">Recent activity is saved locally on this device.</p>
-        </div>
-
-        <div class="history-actions">
-          <button id="exportBtn" class="btn btn-primary" type="button">Export data</button>
-          <label class="btn btn-ghost" for="importFile" role="button">
-            Import data
-          </label>
-          <input id="importFile" class="visually-hidden" type="file" accept="application/json" />
+          <p class="muted">
+            Review your learning volume by language, category, and deck.
+          </p>
         </div>
       </section>
 
-      <section class="panel" aria-label="History filters">
-        <div class="panel-row">
-          <div class="field">
-            <label for="deckFilter">Deck</label>
-            <select id="deckFilter" class="select">
-              <option value="all">All</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="typeFilter">Type</label>
-            <select id="typeFilter" class="select">
-              <option value="all">All</option>
-              <option value="study">Study</option>
-              <option value="deck">Deck</option>
-              <option value="import">Import</option>
-              <option value="export">Export</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="searchFilter">Search</label>
-            <input
-              id="searchFilter"
-              class="input"
-              type="search"
-              placeholder="Search by deck or message"
-              autocomplete="off"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section class="panel" aria-label="History list">
-        <div class="history-meta">
-          <p class="muted" id="historySummary">Loading...</p>
-          <button id="clearHistoryBtn" class="btn btn-danger" type="button">Clear history</button>
+      <section class="history-overview panel" aria-label="History language overview">
+        <div id="historyLanguageTabs" class="history-language-tabs" aria-label="Language filters">
+          <button class="btn btn-ghost language-tab is-active" type="button" data-language="English">
+            English
+          </button>
+          <button class="btn btn-ghost language-tab" type="button" data-language="Korean">
+            Korean
+          </button>
+          <button class="btn btn-ghost language-tab" type="button" data-language="Spanish">
+            Spanish
+          </button>
         </div>
 
-        <div id="historyList" class="history-list" aria-live="polite"></div>
+        <div id="historyAccordion" class="history-accordion" aria-live="polite"></div>
       </section>
     </main>
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <p class="muted">Import export includes decks, progress, streak, and history.</p>
+        <p class="muted">Explore deck study volume grouped by language and category.</p>
       </div>
     </footer>
 

@@ -7,13 +7,17 @@ export function qsa(selector, root = document) {
 }
 
 export function uid(prefix = "id") {
-  const rnd = Math.random().toString(16).slice(2);
-  return `${prefix}-${Date.now().toString(16)}-${rnd}`;
+  const random = Math.random().toString(16).slice(2);
+  return `${prefix}-${Date.now().toString(16)}-${random}`;
 }
 
 export function getParam(name, url = window.location.href) {
-  const u = new URL(url);
-  return u.searchParams.get(name);
+  const currentUrl = new URL(url);
+  return currentUrl.searchParams.get(name);
+}
+
+export function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 export function setToast(message) {
@@ -23,16 +27,8 @@ export function setToast(message) {
   toast.textContent = message;
   toast.classList.add("is-visible");
 
-  window.clearTimeout(setToast._t);
-  setToast._t = window.setTimeout(() => {
+  window.clearTimeout(setToast._timeoutId);
+  setToast._timeoutId = window.setTimeout(() => {
     toast.classList.remove("is-visible");
   }, 2400);
-}
-
-export function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
-
-export function normalize(s) {
-  return String(s || "").trim().toLowerCase();
 }
