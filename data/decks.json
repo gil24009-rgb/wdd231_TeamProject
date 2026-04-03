@@ -14,7 +14,94 @@
         { "id": "es-5", "term": "No", "meaning": "No", "example": "No, gracias." }
       ]
     },
-    {
+{
+  "id": "travel-es",
+  "name": "Spanish Travel",
+  "language": "Spanish",
+  "category": "Travel",
+  "description": "Useful Spanish phrases for traveling.",
+  "cards": [
+        { "id": "es-tr-1", "term": "¿Dónde está el baño?", "meaning": "Where is the bathroom?", "example": "Disculpe, ¿dónde está el baño?" },
+        { "id": "es-tr-2", "term": "Aeropuerto", "meaning": "Airport", "example": "El aeropuerto está lejos." },
+        { "id": "es-tr-3", "term": "Hotel", "meaning": "Hotel", "example": "Nuestro hotel está en el centro." },
+        { "id": "es-tr-4", "term": "Pasaporte", "meaning": "Passport", "example": "Necesito mi pasaporte para viajar." },
+        { "id": "es-tr-5", "term": "Mapa", "meaning": "Map", "example": "Necesito un mapa de la ciudad." }
+      ]
+    },
+{
+  "id": "school-es",
+  "name": "Spanish School",
+  "language": "Spanish",
+  "category": "School",
+  "description": "Common school related vocabulary in Spanish.",
+  "cards": [
+        { "id": "es-sc-1", "term": "Escuela", "meaning": "School", "example": "La escuela empieza a las ocho." },
+        { "id": "es-sc-2", "term": "Profesor", "meaning": "Teacher", "example": "El profesor explica la lección." },
+        { "id": "es-sc-3", "term": "Libro", "meaning": "Book", "example": "Necesito mi libro para la clase." },
+        { "id": "es-sc-4", "term": "Tarea", "meaning": "Homework", "example": "Tengo mucha tarea hoy." },
+        { "id": "es-sc-5", "term": "Estudiante", "meaning": "Student", "example": "El estudiante estudia para el examen." }
+      ]
+    }, 
+{
+  "id": "daily-es",
+  "name": "Daily Spanish",
+  "language": "Spanish",
+  "category": "Daily",
+  "description": "Spanish phrases used in everyday life.",
+  "cards": [
+        { "id": "es-da-1", "term": "Buenos días", "meaning": "Good morning", "example": "Buenos días, ¿cómo estás?" },
+        { "id": "es-da-2", "term": "Buenas tardes", "meaning": "Good afternoon", "example": "Buenas tardes a todos." },
+        { "id": "es-da-3", "term": "Buenas noches", "meaning": "Good night", "example": "Buenas noches, hasta mañana." },
+        { "id": "es-da-4", "term": "¿Qué tal?", "meaning": "How’s it going?", "example": "Hola, ¿qué tal tu día?" },
+        { "id": "es-da-5", "term": "Adiós", "meaning": "Goodbye", "example": "Adiós, nos vemos mañana." }
+      ] 
+    },
+{
+  "id": "basics-ko",
+  "name": "Korean Basics",
+  "language": "Korean",
+  "category": "Basics",
+  "description": "Basic Korean words for beginners.",
+  "cards": [
+        { "id": "ko-ba-1", "term": "네", "meaning": "Yes", "example": "네, 알겠습니다." },
+        { "id": "ko-ba-2", "term": "아니요", "meaning": "No", "example": "아니요, 괜찮아요." },
+        { "id": "ko-ba-3", "term": "안녕", "meaning": "Hi", "example": "안녕! 잘 지냈어?" },
+        { "id": "ko-ba-6", "term": "주세요", "meaning": "Please / Give me", "example": "물 주세요." },
+        { "id": "ko-ba-7", "term": "안녕히 가세요", "meaning": "Goodbye (to someone leaving)", "example": "안녕히 가세요, 내일 봐요." },
+        { "id": "ko-ba-8", "term": "안녕히 계세요", "meaning": "Goodbye (to someone staying)", "example": "안녕히 계세요, 다음에 만나요." }
+      ]
+    },
+{
+  "id": "travel-ko",
+  "name": "Korean Travel",
+  "language": "Korean",
+  "category": "Travel",
+  "description": "Travel related Korean vocabulary.",
+  "cards": [
+        { "id": "ko-tr-1", "term": "공항", "meaning": "Airport", "example": "공항이 어디에 있어요?" },
+        { "id": "ko-tr-2", "term": "호텔", "meaning": "Hotel", "example": "호텔에 체크인했어요." },
+        { "id": "ko-tr-3", "term": "여권", "meaning": "Passport", "example": "여권을 보여 주세요." },
+        { "id": "ko-tr-4", "term": "지도", "meaning": "Map", "example": "지도 있어요?" },
+        { "id": "ko-tr-5", "term": "버스", "meaning": "Bus", "example": "버스를 타고 시내에 가요." },
+        { "id": "ko-tr-6", "term": "지하철", "meaning": "Subway", "example": "지하철역이 어디예요?" }   
+      ]
+    },
+{
+  "id": "school-ko",
+  "name": "Korean School",
+  "language": "Korean",
+  "category": "School",
+  "description": "School vocabulary in Korean.",
+  "cards": [
+        { "id": "ko-sc-1", "term": "학교", "meaning": "School", "example": "학교에 갑니다." },
+        { "id": "ko-sc-2", "term": "선생님", "meaning": "Teacher", "example": "선생님이 설명합니다." },
+        { "id": "ko-sc-3", "term": "책", "meaning": "Book", "example": "책을 읽어요." },
+        { "id": "ko-sc-4", "term": "학생", "meaning": "Student", "example": "학생이 공부합니다." },
+        { "id": "ko-sc-5", "term": "수업", "meaning": "Class / Lesson", "example": "오늘 수업이 재미있어요." },
+        { "id": "ko-sc-6", "term": "연필", "meaning": "Pencil", "example": "연필로 글씨를 써요." }
+      ]
+    },
+{
       "id": "daily-ko",
       "name": "Daily Korean",
       "language": "Korean",
@@ -24,8 +111,18 @@
         { "id": "ko-1", "term": "안녕하세요", "meaning": "Hello", "example": "안녕하세요, 만나서 반가워요." },
         { "id": "ko-2", "term": "감사합니다", "meaning": "Thank you", "example": "도와주셔서 감사합니다." },
         { "id": "ko-3", "term": "죄송합니다", "meaning": "Sorry", "example": "늦어서 죄송합니다." },
-        { "id": "ko-4", "term": "괜찮아요", "meaning": "It is okay", "example": "괜찮아요, 문제 없어요." }
+        { "id": "ko-4", "term": "괜찮아요", "meaning": "It is okay", "example": "괜찮아요, 문제 없어요." },
+        { "id": "ko-5", "term": "좋아요", "meaning": "Good / I like it", "example": "이 음식 정말 좋아요." },
+        { "id": "ko-6", "term": "잘 지내요?", "meaning": "How are you?", "example": "오랜만이에요! 잘 지내요?" }
       ]
     }
   ]
 }
+
+
+
+
+
+
+
+

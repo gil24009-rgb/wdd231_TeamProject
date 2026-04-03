@@ -172,8 +172,10 @@ function handleKnown() {
 }
 
 function handleAgain() {
-  goNextCard();
+  renderCard();
+  setToast("Review this card again.");
 }
+
 
 async function initDeckState() {
   allDecks = await getAllDecks();

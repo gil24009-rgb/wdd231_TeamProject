@@ -96,6 +96,48 @@
   margin-bottom: 12px;
 }
 
+.deck-card {
+  display: flex;
+  align-items: flex-start; 
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.deck-card-title {
+  font-size: 1.1rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-card-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  margin-top: 0.1rem;
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
 .dialog {
   border: 1px solid var(--border);
   border-radius: var(--radius);
