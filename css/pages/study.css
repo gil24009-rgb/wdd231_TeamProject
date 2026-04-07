@@ -17,12 +17,17 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
-  margin-bottom: 16px;
+  margin-bottom: 34px;
 }
 
 .study-progress-card {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  padding: 16px 18px;
+  align-self: start;
+  max-width: 360px;
+  width: 100%;
+  min-height: auto;
 }
 
 .study-progress-stat {
@@ -38,9 +43,9 @@
 }
 
 .study-progress-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .study-body {
@@ -141,6 +146,7 @@
   border: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  margin-top: 2px;
 }
 
 .progress-fill {
@@ -157,7 +163,8 @@
   }
 
   .study-head {
-    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 24px;
   }
 }
 
@@ -165,5 +172,9 @@
   .flip-card,
   .flip-inner {
     min-height: 300px;
+  }
+
+  .study-progress-card {
+    max-width: none;
   }
 }

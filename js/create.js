@@ -259,9 +259,9 @@ function createDeckLibraryCard(deck) {
       <span class="badge">${escapeHtml(deck.language)} · ${escapeHtml(deck.category)}</span>
     </div>
     <div class="muted">Cards: ${(deck.cards || []).length}</div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-primary edit-deck-btn" type="button">Edit</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
       <a class="btn btn-ghost" href="study.html?deck=${encodeURIComponent(deck.id)}">Study</a>
+      <button class="btn btn-primary edit-deck-btn" type="button">Edit</button>
     </div>
   `;
 

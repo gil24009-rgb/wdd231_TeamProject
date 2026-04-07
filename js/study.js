@@ -107,7 +107,7 @@ function updateProgress() {
   const completion = total > 0 ? Math.round((current / total) * 100) : 0;
 
   progressText.textContent = `${current} of ${total}`;
-  knownText.textContent = `Known ${knownSet.size}`;
+  knownText.textContent = `${knownSet.size}`;
   progressPercentText.textContent = `${completion}%`;
   progressFill.style.width = `${completion}%`;
 }
