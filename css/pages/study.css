@@ -22,30 +22,32 @@
 
 .study-progress-card {
   display: grid;
-  gap: 10px;
-  padding: 16px 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 14px;
+
+  padding: 14px 18px;
   align-self: start;
-  max-width: 360px;
   width: 100%;
+  max-width: none;
+
   min-height: auto;
 }
 
 .study-progress-stat {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .study-progress-label {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.8rem;
 }
 
 .study-progress-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 400;
-  letter-spacing: 0;
 }
 
 .study-body {
@@ -141,12 +143,15 @@
 }
 
 .progress-bar {
-  height: 10px;
+  grid-column: 1 / -1;
+
+  height: 8px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.18);
   overflow: hidden;
-  margin-top: 2px;
+
+  margin-top: 6px;
 }
 
 .progress-fill {
@@ -163,8 +168,9 @@
   }
 
   .study-head {
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 24px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
   }
 }
 
